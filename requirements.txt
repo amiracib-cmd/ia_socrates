@@ -1,9 +1,6 @@
-streamlit==1.45.1
-pandas
+streamlit
 numpy
+pandas
 langchain
-langchain-community
-langchain-huggingface
-faiss-cpu
 sentence-transformers
-huggingface_hub
+faiss-cpu
