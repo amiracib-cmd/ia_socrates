@@ -55,7 +55,7 @@ Resposta:"""
         retriever=retriever,
         chain_type="stuff",
         chain_type_kwargs={"prompt": prompt},
-        return_source_documents=False  # 👈 Aqui desativa as fontes
+        return_source_documents=False
     )
 
     return qa_chain
@@ -68,5 +68,5 @@ pergunta = st.text_input("Digite sua pergunta em português:")
 if pergunta:
     with st.spinner("Gerando resposta com LLM..."):
         resultado = qa(pergunta)
-        st.subheader("📌 Resposta:")
+        st.subheader("Resposta:")
         st.write(resultado["result"])
