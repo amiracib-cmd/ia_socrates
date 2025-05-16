@@ -22,12 +22,14 @@ def load_documents(csv_path="bncc.csv"):
 @st.cache_resource(show_spinner=False)
 def setup_rag():
     docs = load_documents()
+
     splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=50)
     chunks = splitter.split_documents(docs)
 
     embeddings = HuggingFaceEmbeddings(
         model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
     )
+
     vectorstore = FAISS.from_documents(chunks, embedding=embeddings)
     retriever = vectorstore.as_retriever()
 
@@ -61,13 +63,12 @@ Resposta:"""
 
     return qa_chain
 
-docs = load_documents()
-qa = setup_rag(docs)
+qa = setup_rag()
 
-pergunta = st.text_input("Digite sua pergunta em português:")
+pergunta = st.text_input("Digite sua pergunta:")
 
 if pergunta:
-    with st.spinner("Gerando resposta com LLM..."):
+    with st.spinner("Consultando modelo..."):
         resultado = qa(pergunta)
-        st.subheader("Resposta:")
+        st.subheader("📌 Resposta:")
         st.write(resultado["result"])
