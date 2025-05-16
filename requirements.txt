@@ -1,0 +1,9 @@
+streamlit
+pandas
+langchain
+langchain-community
+sentence-transformers
+transformers==4.37.2
+faiss-cpu
+torch==2.1.0
+tiktoken
