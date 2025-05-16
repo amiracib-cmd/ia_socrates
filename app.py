@@ -1,9 +1,8 @@
 import streamlit as st
 import pandas as pd
 import requests
-import os
-from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.vectorstores import FAISS
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores import FAISS
 from langchain.schema import Document
 from langchain.text_splitter import CharacterTextSplitter
 
@@ -11,7 +10,7 @@ st.set_page_config(page_title="IAssistente Sócrates - Projeto IAgora", layout="
 st.title("IAssistente Sócrates - Projeto IAgora")
 
 HUGGINGFACE_API_TOKEN = st.secrets["HUGGINGFACEHUB_API_TOKEN"]
-HF_MODEL_URL = "https://api-inference.huggingface.co/models/tiiuae/falcon-7b-instruct"
+HF_MODEL_URL = "https://api-inference.huggingface.co/models/google/flan-t5-large"
 
 headers = {
     "Authorization": f"Bearer {HUGGINGFACE_API_TOKEN}",
@@ -36,23 +35,14 @@ def setup_retriever():
 retriever = setup_retriever()
 
 def gerar_prompt(contexto, pergunta):
-    return f"""
-Responda à pergunta com base no contexto abaixo.
-
-Contexto:
-{contexto}
-
-Pergunta:
-{pergunta}
-
-Resposta:"""
+    return f"Contexto: {contexto}\n\nPergunta: {pergunta}\n\nResposta:"
 
 def consultar_llm(prompt):
     payload = {
         "inputs": prompt,
         "parameters": {
             "temperature": 0.3,
-            "max_new_tokens": 512
+            "max_new_tokens": 256
         }
     }
     response = requests.post(HF_MODEL_URL, headers=headers, json=payload)
@@ -60,14 +50,16 @@ def consultar_llm(prompt):
     resultado = response.json()
     if isinstance(resultado, list) and "generated_text" in resultado[0]:
         return resultado[0]["generated_text"].split("Resposta:")[-1].strip()
+    elif isinstance(resultado, dict) and "error" in resultado:
+        return f"Erro da API: {resultado['error']}"
     else:
-        return "Erro na resposta do modelo."
+        return str(resultado)
 
-pergunta = st.text_input("Digite sua pergunta em português:")
+pergunta = st.text_input("Digite sua pergunta:")
 
 if pergunta:
     with st.spinner("Consultando base de dados e modelo..."):
-        documentos = retriever.get_relevant_documents(pergunta)
+        documentos = retriever.invoke(pergunta)
         contexto = "\n".join([doc.page_content for doc in documentos])
         prompt = gerar_prompt(contexto, pergunta)
         resposta = consultar_llm(prompt)
