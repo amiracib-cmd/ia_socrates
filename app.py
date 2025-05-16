@@ -7,7 +7,7 @@ from langchain.text_splitter import CharacterTextSplitter
 from langchain.schema import Document
 import requests
 
-st.set_page_config(page_title="IAssistente Sócrates - Projeto IAgora", layout="centered")
+st.set_page_config(page_title="IAssistente Sócrates", layout="centered")
 st.title("IAssistente Sócrates")
 
 client = Groq(api_key=st.secrets["GROQ_API"])
@@ -35,12 +35,12 @@ retriever = setup_retriever()
 pergunta = st.text_input("Digite sua pergunta:")
 
 if pergunta:
-    with st.spinner("Buscando resposta com Groq (LLAMA 3.1)..."):
+    with st.spinner("Buscando resposta... aguarde..."):
         documentos = retriever.invoke(pergunta)
         contexto = "\n".join([doc.page_content for doc in documentos])
 
         prompt = f"""
-Você é um assistente educacional que responde com base em documentos da BNCC. Use o seguinte contexto para responder com precisão à pergunta.
+Você é um assistente educacional que responde com base em documentos da BNCC, da BNCC na Computação e da Educação no Brasil. Use o seguinte contexto para responder com precisão à pergunta.
 
 Contexto:
 {contexto}
@@ -56,7 +56,7 @@ Resposta:"""
                 {"role": "system", "content": "Você é um assistente útil que responde em português."},
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.3,
+            temperature=0.4,
             max_tokens=512
         )
 
