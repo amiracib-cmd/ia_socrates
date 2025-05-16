@@ -6,16 +6,11 @@ from langchain_community.vectorstores import FAISS
 from langchain.schema import Document
 from langchain.text_splitter import CharacterTextSplitter
 
+
 st.set_page_config(page_title="IAssistente Sócrates - Projeto IAgora", layout="centered")
 st.title("IAssistente Sócrates - Projeto IAgora")
 
-HUGGINGFACE_API_TOKEN = st.secrets["HUGGINGFACEHUB_API_TOKEN"]
-HF_MODEL_URL = "https://api-inference.huggingface.co/models/google/flan-t5-large"
-
-headers = {
-    "Authorization": f"Bearer {HUGGINGFACE_API_TOKEN}",
-    "Content-Type": "application/json"
-}
+OPENROUTER_API_KEY = st.secrets["OPENROUTER_API_KEY"]
 
 @st.cache_data(show_spinner=False)
 def load_documents(csv_path="bncc.csv"):
@@ -32,37 +27,45 @@ def setup_retriever():
     vectorstore = FAISS.from_documents(chunks, embedding=embeddings)
     return vectorstore.as_retriever()
 
-retriever = setup_retriever()
-
 def gerar_prompt(contexto, pergunta):
-    return f"Contexto: {contexto}\n\nPergunta: {pergunta}\n\nResposta:"
+    return f"""
+Você é um assistente inteligente que responde em português com base em documentos da BNCC. Use o seguinte contexto para responder à pergunta.
 
-def consultar_llm(prompt):
-    payload = {
-        "inputs": prompt,
-        "parameters": {
-            "temperature": 0.3,
-            "max_new_tokens": 256
-        }
+Contexto:
+{contexto}
+
+Pergunta:
+{pergunta}
+
+Resposta:"""
+
+def consultar_grok(prompt):
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json"
     }
-    response = requests.post(HF_MODEL_URL, headers=headers, json=payload)
+    payload = {
+        "model": "xai/grok-1:free",
+        "messages": [
+            {"role": "system", "content": "Você é um assistente útil que responde em português."},
+            {"role": "user", "content": prompt}
+        ],
+        "temperature": 0.3,
+        "max_tokens": 512
+    }
+    response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload)
     response.raise_for_status()
-    resultado = response.json()
-    if isinstance(resultado, list) and "generated_text" in resultado[0]:
-        return resultado[0]["generated_text"].split("Resposta:")[-1].strip()
-    elif isinstance(resultado, dict) and "error" in resultado:
-        return f"Erro da API: {resultado['error']}"
-    else:
-        return str(resultado)
+    return response.json()["choices"][0]["message"]["content"]
 
-pergunta = st.text_input("Digite sua pergunta:")
+retriever = setup_retriever()
+pergunta = st.text_input("Digite sua pergunta em português:")
 
 if pergunta:
-    with st.spinner("Consultando base de dados e modelo..."):
+    with st.spinner("Consultando base de dados e modelo Grok-1..."):
         documentos = retriever.invoke(pergunta)
         contexto = "\n".join([doc.page_content for doc in documentos])
         prompt = gerar_prompt(contexto, pergunta)
-        resposta = consultar_llm(prompt)
+        resposta = consultar_grok(prompt)
 
         st.subheader("📌 Resposta:")
         st.write(resposta)
