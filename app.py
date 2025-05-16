@@ -7,8 +7,8 @@ from langchain.text_splitter import CharacterTextSplitter
 from langchain.schema import Document
 import requests
 
-st.set_page_config(page_title="IAssistente RAG - BNCC com Groq", layout="centered")
-st.title("🤖 IAssistente - RAG com BNCC (LLAMA 3.1 via Groq)")
+st.set_page_config(page_title="IAssistente Sócrates - Projeto IAgora", layout="centered")
+st.title("IAssistente Sócrates")
 
 client = Groq(api_key=st.secrets["GROQ_API"])
 
