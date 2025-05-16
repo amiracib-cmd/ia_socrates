@@ -33,7 +33,8 @@ def setup_rag(_docs):
         repo_id="meta-llama/Meta-Llama-3-8B-Instruct",
         task="text-generation",
         huggingfacehub_api_token=os.environ.get("HUGGINGFACEHUB_API_TOKEN"),
-        model_kwargs={"temperature": 0.7, "max_new_tokens": 512}  # ← ERRADO
+        temperature=0.7,
+        max_new_tokens=512
     )
 
     prompt_template = PromptTemplate.from_template("""
