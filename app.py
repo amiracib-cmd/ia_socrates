@@ -1,13 +1,12 @@
 import streamlit as st
 import pandas as pd
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import FAISS
-from langchain_huggingface import HuggingFaceEndpoint
-from langchain.schema import Document
-from langchain.chains import RetrievalQA
-from langchain.prompts import PromptTemplate
-from langchain.text_splitter import CharacterTextSplitter
 import os
+from langchain.embeddings import HuggingFaceEmbeddings
+from langchain.vectorstores import FAISS
+from langchain.llms import HuggingFaceHub
+from langchain.chains import RetrievalQA
+from langchain.schema import Document
+from langchain.text_splitter import CharacterTextSplitter
 
 st.set_page_config(page_title="IAssistente Sócrates - Projeto IAgora", layout="centered")
 st.title("IAssistente Sócrates - Projeto IAgora")
@@ -15,60 +14,48 @@ st.title("IAssistente Sócrates - Projeto IAgora")
 @st.cache_data(show_spinner=False)
 def load_documents(csv_path="bncc.csv"):
     df = pd.read_csv(csv_path)
-    docs = [
-        Document(page_content=row["text"], metadata={"title": row["title"]})
-        for _, row in df.iterrows()
-    ]
+    docs = [Document(page_content=row["text"], metadata={"title": row.get("title", "")}) for _, row in df.iterrows()]
     return docs
 
 @st.cache_resource(show_spinner=False)
 def setup_rag(_docs):
     splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-    split_docs = splitter.split_documents(_docs)
+    chunks = splitter.split_documents(_docs)
 
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
-    db = FAISS.from_documents(split_docs, embeddings)
-
-    llm = HuggingFaceEndpoint(
-        repo_id="csebuetnlp/mT5_multilingual_XLSum",
-        task="text-generation",
-        huggingfacehub_api_token=os.environ.get("HUGGINGFACEHUB_API_TOKEN"),
-        temperature=0.7,
-        max_new_tokens=512
+    embeddings = HuggingFaceEmbeddings(
+        model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
     )
 
-    prompt_template = PromptTemplate.from_template("""
-Você é um assistente inteligente. Responda com base apenas nos trechos abaixo. Use o português claro e objetivo.
+    vectorstore = FAISS.from_documents(chunks, embedding=embeddings)
+    retriever = vectorstore.as_retriever()
 
-Trechos do contexto:
-{context}
-
-Pergunta:
-{question}
-
-Resposta:
-""")
+    llm = HuggingFaceHub(
+        repo_id="tiiuae/falcon-7b-instruct",
+        model_kwargs={"temperature": 0.3, "max_new_tokens": 512},
+        huggingfacehub_api_token=HUGGINGFACEHUB_API_TOKEN,
+    )
 
     qa_chain = RetrievalQA.from_chain_type(
         llm=llm,
-        retriever=db.as_retriever(search_kwargs={"k": 2}),
-        chain_type="stuff",
-        chain_type_kwargs={"prompt": prompt_template}
+        retriever=retriever,
+        return_source_documents=True
     )
+
     return qa_chain
 
-try:
-    docs = load_documents("bncc.csv")
-    qa_chain = setup_rag(docs)
-    ready = True
-except Exception as e:
-    st.error(f"Erro ao inicializar o sistema: {e}")
-    ready = False
+docs = load_documents()
+qa = setup_rag(docs)
 
-if ready:
-    query = st.text_input("Digite sua pergunta sobre o conteúdo:")
-    if query:
-        with st.spinner("Consultando a base com LLaMA 3..."):
-            answer = qa_chain.invoke(query)
-            st.success(answer)
+pergunta = st.text_input("Digite sua pergunta em português:")
+
+if pergunta:
+    with st.spinner("Consultando base e gerando resposta..."):
+        resultado = qa(pergunta)
+        st.subheader("Resposta:")
+        st.write(resultado["result"])
+
+        st.subheader("Fontes:")
+        for doc in resultado["source_documents"]:
+            st.markdown(f"- **{doc.metadata.get('title', '')}**: {doc.page_content[:200]}...")
+
 
