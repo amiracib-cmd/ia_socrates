@@ -1,7 +1,7 @@
 streamlit==1.41.1
 numpy
 pandas
-requests
+groq
 langchain
 langchain-community
 sentence-transformers
