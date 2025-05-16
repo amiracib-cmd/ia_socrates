@@ -32,7 +32,8 @@ def setup_rag(_docs):
     llm = HuggingFaceHub(
         repo_id="tiiuae/falcon-7b-instruct",
         model_kwargs={"temperature": 0.3, "max_new_tokens": 512},
-        huggingfacehub_api_token=HUGGINGFACEHUB_API_TOKEN,
+        huggingfacehub_api_token=st.secrets["HUGGINGFACEHUB_API_TOKEN"]
+,
     )
 
     qa_chain = RetrievalQA.from_chain_type(
