@@ -20,7 +20,8 @@ def load_documents(csv_path="bncc.csv"):
     ]
 
 @st.cache_resource(show_spinner=False)
-def setup_rag(docs):
+def setup_rag():
+    docs = load_documents()
     splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=50)
     chunks = splitter.split_documents(docs)
 
