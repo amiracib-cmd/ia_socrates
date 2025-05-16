@@ -30,7 +30,7 @@ def setup_rag(_docs):
     db = FAISS.from_documents(split_docs, embeddings)
 
     llm = HuggingFaceEndpoint(
-        repo_id="tiiuae/falcon-7b-instruct",
+        repo_id="google/flan-t5-large",
         task="text-generation",
         huggingfacehub_api_token=os.environ.get("HUGGINGFACEHUB_API_TOKEN"),
         temperature=0.7,
