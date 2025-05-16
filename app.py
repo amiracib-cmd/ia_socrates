@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain_community.llms import HuggingFaceEndpoint
+from langchain_huggingface import HuggingFaceEndpoint
 from langchain.schema import Document
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
@@ -30,10 +30,10 @@ def setup_rag(_docs):
     db = FAISS.from_documents(split_docs, embeddings)
 
     llm = HuggingFaceEndpoint(
-        repo_id="meta-llama/Meta-Llama-3-8B-Instruct",#"mistralai/Mistral-7B-Instruct-v0.1"
+        repo_id="meta-llama/Meta-Llama-3-8B-Instruct",
         task="text-generation",
         huggingfacehub_api_token=os.environ.get("HUGGINGFACEHUB_API_TOKEN"),
-        model_kwargs={"temperature": 0.7, "max_new_tokens": 512}
+        model_kwargs={"temperature": 0.7, "max_new_tokens": 512}  # ← ERRADO
     )
 
     prompt_template = PromptTemplate.from_template("""
