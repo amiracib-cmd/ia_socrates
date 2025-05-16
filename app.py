@@ -30,7 +30,7 @@ def setup_rag(_docs):
     db = FAISS.from_documents(split_docs, embeddings)
 
     llm = HuggingFaceEndpoint(
-        repo_id="meta-llama/Meta-Llama-3-8B-Instruct",
+        repo_id="meta-llama/Meta-Llama-3-8B-Instruct",#"mistralai/Mistral-7B-Instruct-v0.1"
         task="text-generation",
         huggingfacehub_api_token=os.environ.get("HUGGINGFACEHUB_API_TOKEN"),
         model_kwargs={"temperature": 0.7, "max_new_tokens": 512}
