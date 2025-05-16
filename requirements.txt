@@ -2,5 +2,6 @@ streamlit
 numpy
 pandas
 langchain
+langchain-community
 sentence-transformers
 faiss-cpu
