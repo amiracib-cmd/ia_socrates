@@ -14,9 +14,9 @@ client = Groq(api_key=st.secrets["GROQ_API"])
 
 @st.cache_data(show_spinner=False)
 def load_documents(csv_path="bncc.csv"):
-    df = pd.read_csv(csv_path)
+    df = pd.read_csv(csv_path,sep=',')
     return [
-        Document(page_content=row["text"], metadata={"title": row.get("title", "")})
+        Document(page_content=row["context"], metadata={"question": row.get("question", "")})
         for _, row in df.iterrows()
     ]
 
