@@ -1,2 +1,3 @@
-# ia_socrates
-RAG para o projeto IAgora
+# IAssistente Sócrates
+
+Um chatbot baseado em RAG para o projeto IAgora.
